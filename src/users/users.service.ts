@@ -1,4 +1,4 @@
-import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Inject, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { Connection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { IAllUsers, IUsers } from './interface/users.interface';
 import { SignupDto, LoginDto, UpdateUserDto } from './dto/signup.dto';
@@ -32,9 +32,38 @@ export class UsersService implements IUsers {
             return new HttpException("Error de servidor", HttpStatus.INTERNAL_SERVER_ERROR, error)
         }
     }
+    private async comparePasswords(plainPassword: string, hashedPassword: string): Promise<boolean> {
+        return bcrypt.compare(plainPassword, hashedPassword);
+    }
+    async login(login: LoginDto): Promise<LoginDto | any> {
+        try {
+            const { email, password } = login;
+            const [users] = await this.connection.query<RowDataPacket[]>(
+                'SELECT * FROM users WHERE email = ?',
+                [email],
+            );
 
-    login(login: LoginDto): Promise<LoginDto> {
-        throw new Error('Method not implemented.');
+            if (users.length === 0) {
+                return new HttpException("No se encontro usuario en la base de datos", HttpStatus.NOT_FOUND)
+            }
+
+            const user = users[0];
+            const isPasswordValid = await this.comparePasswords(password, user.password);
+            if (!isPasswordValid) {
+                return null;
+            }
+            return {
+                userId: user.userId,
+                name: user.name,
+                email: user.email
+
+            }
+
+        } catch (error) {
+            console.log(error)
+            return new HttpException("Error de servidor", HttpStatus.INTERNAL_SERVER_ERROR, error)
+
+        }
     }
     async getAll(): Promise<IAllUsers[] | null | any> {
 

@@ -29,4 +29,9 @@ export class UsersController {
     async delete(@Param('userId', ParseIntPipe) userId: number) {
         return this.usersService.delete(userId)
     }
+
+    @Post('login')
+    async login(@Body() login:LoginDto){
+        return await this.usersService.login(login)
+    }
 }
