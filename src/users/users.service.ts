@@ -69,11 +69,35 @@ export class UsersService implements IUsers {
             return new HttpException("Error de servidor", HttpStatus.INTERNAL_SERVER_ERROR, error)
         }
     }
-    update(userId: number, updateUserDto: UpdateUserDto): Promise<UpdateUserDto> {
-        throw new Error('Method not implemented.');
+    async update(userId: number, updateUserDto: UpdateUserDto): Promise<UpdateUserDto | any> {
+        try {
+
+            const { name, email, gender, address, password } = updateUserDto
+            const hashedPassword = await this.hashPassword(password);
+            const [user] = await this.connection.query(`UPDATE users
+             SET 
+             name=?, email=?, address=?,password =?, gender=? WHERE userId =?`,
+                [name, email, address, hashedPassword, gender, userId])
+
+            return {
+                user,
+                name,
+                email
+            }
+
+        } catch (error) {
+            console.log(error)
+            return new HttpException("Error de servidor", HttpStatus.INTERNAL_SERVER_ERROR, error)
+        }
     }
-    delete(userId: number): Promise<any> {
-        throw new Error('Method not implemented.');
+    async delete(userId: number): Promise<any> {
+        try {
+            const [userDeleted] = await this.connection.query(`DELETE FROM users WHERE userId=${userId}`)
+            return userDeleted
+        } catch (error) {
+            console.log(error)
+            return new HttpException("Error de servidor", HttpStatus.INTERNAL_SERVER_ERROR, error)
+        }
     }
 
 
