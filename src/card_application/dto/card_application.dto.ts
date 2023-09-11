@@ -6,3 +6,7 @@ export class CardApplicationDto{
     full_name:string;
     email:string;
 }
+
+export class ApplicationRequestDto{
+    applicationId: number;
+}
